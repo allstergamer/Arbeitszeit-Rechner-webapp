@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de" data-theme="{{ user_theme|default:'Dunkel' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>{% block title %}Arbeitszeitrechner{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'arbeitszeit/style.css' %}?v=2">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="app-layout">
+    <aside class="sidebar">
+        <a class="sidebar-brand" href="{% url 'dashboard' %}">
+            <span class="brand-mark">
+                <svg viewBox="0 0 48 48" aria-hidden="true">
+                    <circle cx="24" cy="24" r="17"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.2"/>
+                    <path d="M24 13 V24 L32 29"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"/>
+                    <circle cx="24" cy="24" r="2"
+                            fill="currentColor"/>
+                </svg>
+            </span>
+            <span class="brand-copy">
+                <span class="brand-name">Chrona</span>
+                <span class="brand-subtitle">Arbeitszeitmanagement</span>
+            </span>
+        </a>
+        <nav class="sidebar-nav" aria-label="Hauptnavigation">
+            <span class="nav-label">ÜBERSICHT</span>
+            <a href="{% url 'dashboard' %}" class="nav-item">▦ Dashboard</a>
+            <a href="{% url 'eintrag_erfassen' %}" class="nav-item">＋ Eintrag erfassen</a>
+            <a href="{% url 'eintraege' %}" class="nav-item">◷ Einträge</a>
+            <a href="{% url 'auswertungen' %}" class="nav-item">▤ Auswertungen</a>
+            <a href="{% url 'historie' %}" class="nav-item">↶ Änderungshistorie</a>
+            <span class="nav-label">KONTO</span>
+            <a href="{% url 'einstellungen' %}" class="nav-item">⚙ Einstellungen</a>
+            <a href="{% url 'profil' %}" class="nav-item">♙ Profil</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ user.username|first|upper }}</div>
+                <div><strong>{{ user.username }}</strong><small>Angemeldet</small></div>
+            </div>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">Abmelden</button>
+            </form>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="topbar">
+            <span>Arbeitszeitverwaltung</span>
+            <span>{{ user.username }}</span>
+        </header>
+        <section class="page-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</div>
+{% else %}
+<main class="auth-layout">
+    {% if messages %}
+        {% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+    {% block auth_content %}{% endblock %}
+</main>
+{% endif %}
+{% block extra_js %}{% endblock %}
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

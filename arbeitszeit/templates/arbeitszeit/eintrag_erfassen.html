@@ -1,0 +1,23 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}{% if bearbeiten %}Eintrag bearbeiten{% else %}Eintrag erfassen{% endif %} – Arbeitszeitrechner{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{% if bearbeiten %}Arbeitszeiteintrag bearbeiten{% else %}Arbeitszeit erfassen{% endif %}</h1><p>Trage Datum und Arbeitszeiten ein. Pausen und Sollwerte werden anhand deiner gültigen Einstellungen übernommen.</p></div></div>
+<div class="form-card">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+        <div class="form-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+            {% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="form-actions">
+            <a href="{% url 'eintraege' %}" class="secondary-button">Abbrechen</a>
+            <button type="submit" class="primary-button">{% if bearbeiten %}Änderungen speichern{% else %}Eintrag speichern{% endif %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

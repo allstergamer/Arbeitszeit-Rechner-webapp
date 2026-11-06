@@ -1,0 +1,23 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Änderungshistorie – Arbeitszeitrechner{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Änderungshistorie</h1><p>Nachvollziehbare Übersicht über erstellte, bearbeitete und gelöschte Einträge.</p></div></div>
+<div class="entry-list">
+{% for eintrag in historie %}
+    <article class="entry-row history-row">
+        <div class="entry-main"><strong>{{ eintrag.get_aktion_display }}</strong><small>{{ eintrag.zeitpunkt|date:"d.m.Y H:i" }}</small></div>
+        <div class="entry-work"><strong>Eintrag #{{ eintrag.eintrag_id }}</strong><small>{{ eintrag.daten_snapshot.datum }}</small></div>
+        <details><summary>Details anzeigen</summary>
+            <dl>
+                <dt>Arbeitszeit</dt><dd>{{ eintrag.daten_snapshot.startzeit }} – {{ eintrag.daten_snapshot.endzeit }}</dd>
+                <dt>Netto</dt><dd>{{ eintrag.daten_snapshot.arbeitsminuten }} Minuten</dd>
+                <dt>Frühstückspause</dt><dd>{{ eintrag.daten_snapshot.fruehstueckspause }} Minuten</dd>
+                <dt>Mittagspause</dt><dd>{{ eintrag.daten_snapshot.mittagspause }} Minuten</dd>
+                <dt>Tagesdifferenz</dt><dd>{{ eintrag.daten_snapshot.differenzminuten }} Minuten</dd>
+                {% if eintrag.daten_snapshot.notizen %}<dt>Notizen</dt><dd>{{ eintrag.daten_snapshot.notizen }}</dd>{% endif %}
+            </dl>
+        </details>
+    </article>
+{% empty %}<div class="empty-state">Es liegen noch keine Änderungen vor.</div>{% endfor %}
+</div>
+{% endblock %}

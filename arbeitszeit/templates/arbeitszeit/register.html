@@ -1,0 +1,22 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Registrieren – Arbeitszeitrechner{% endblock %}
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-brand">◷ Arbeitszeit</div><h1>Konto erstellen</h1>
+    <p class="auth-description">Erstelle ein persönliches Konto für deine Arbeitszeiten.</p>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+        <div class="form-field">
+            <label for="{{ field.id_for_label }}">{% if field.name == "username" %}Benutzername{% elif field.name == "password1" %}Passwort{% elif field.name == "password2" %}Passwort wiederholen{% else %}{{ field.label }}{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}<small class="field-help">{{ field.help_text|safe }}</small>{% endif %}
+            {% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="primary-button">Konto erstellen</button>
+    </form>
+    <div class="auth-link">Bereits registriert? <a href="{% url 'login' %}">Zur Anmeldung</a></div>
+</div>
+{% endblock %}

@@ -1,0 +1,118 @@
+
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Einstellungen – Arbeitszeitrechner{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Arbeitszeiteinstellungen</h1>
+        <p>Änderungen gelten ab dem gewählten Datum. Bereits gespeicherte Einträge werden nicht rückwirkend verändert.</p>
+    </div>
+</div>
+
+<div class="form-card settings-card">
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="message error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <section class="settings-section">
+            <h2>Allgemeine Einstellungen</h2>
+
+            <div class="settings-grid settings-grid-2">
+                <div class="form-field">
+                    <label for="{{ form.gueltig_ab.id_for_label }}">Gültig ab</label>
+                    {{ form.gueltig_ab }}
+                    {% if form.gueltig_ab.errors %}
+                        <div class="field-error">{{ form.gueltig_ab.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.wochen_soll.id_for_label }}">Wochensoll (Minuten)</label>
+                    {{ form.wochen_soll }}
+                    <small class="field-help">Standard: 2315 Minuten = 38:35 Stunden.</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2>Pausenzeiten</h2>
+
+            <div class="settings-grid settings-grid-2">
+                <div class="form-field">
+                    <label for="{{ form.fruehstueckspause.id_for_label }}">Frühstückspause (Minuten)</label>
+                    {{ form.fruehstueckspause }}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.mittagspause.id_for_label }}">Mittagspause (Minuten)</label>
+                    {{ form.mittagspause }}
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2>Tagessoll</h2>
+
+            <div class="settings-grid settings-grid-3 worktime-grid">
+                {% for field in zeiten_form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="field-error">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2>Arbeitszeitmodelle</h2>
+
+            <div class="settings-grid settings-grid-3 worktime-grid">
+                {% for field in zeiten_form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="field-error">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="primary-button">Einstellungen speichern</button>
+        </div>
+    </form>
+</div>
+
+<section class="dashboard-section">
+    <h2>Bisherige Einstellungen</h2>
+
+    <div class="entry-list">
+        {% for einstellung in einstellungen %}
+            <article class="entry-row">
+                <div class="entry-main">
+                    <strong>Gültig ab {{ einstellung.gueltig_ab|date:"d.m.Y" }}</strong>
+                    <small>Wochensoll: {{ einstellung.wochen_soll }} Minuten</small>
+                </div>
+
+                <div class="entry-work">
+                    <strong>{{ einstellung.fruehstueckspause }} + {{ einstellung.mittagspause }} min</strong>
+                    <small>Pausen</small>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state">Keine Einstellungen vorhanden.</div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}

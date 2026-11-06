@@ -1,0 +1,128 @@
+
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Einträge – Chrona{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Arbeitszeiteinträge</h1>
+        <p>Übersicht deiner bisher erfassten Arbeitszeiten.</p>
+    </div>
+
+    <a href="{% url 'eintrag_erfassen' %}"
+       class="primary-button entry-create-button">
+        ＋ Eintrag erfassen
+    </a>
+</div>
+
+<form method="get" class="filter-bar">
+    <label for="filter-von">
+        Von
+        <input
+            type="date"
+            id="filter-von"
+            name="von"
+            value="{{ filter_von }}"
+        >
+    </label>
+
+    <label for="filter-bis">
+        Bis
+        <input
+            type="date"
+            id="filter-bis"
+            name="bis"
+            value="{{ filter_bis }}"
+        >
+    </label>
+
+    <button class="secondary-button" type="submit">
+        Filtern
+    </button>
+
+    <a href="{% url 'eintraege' %}" class="secondary-button filter-reset-button">
+        <i data-lucide="rotate-ccw"></i>
+        Filter zurücksetzen
+    </a>
+</form>
+
+<div class="entry-list">
+    {% for eintrag in eintraege %}
+        <article class="entry-row">
+            <div class="entry-main">
+                <strong>{{ eintrag.datum|date:"d.m.Y" }}</strong>
+                <small>
+                    {{ eintrag.startzeit|time:"H:i" }}
+                    – {{ eintrag.endzeit|time:"H:i" }}
+                </small>
+            </div>
+
+            <div class="entry-work">
+                <strong>{{ eintrag.arbeitsminuten }} min</strong>
+                <small>Nettoarbeitszeit</small>
+            </div>
+
+            <div class="entry-balance">
+                <strong>
+                    {% if eintrag.differenzminuten > 0 %}+{% endif %}{{ eintrag.differenzminuten }} min
+                </strong>
+                <small>Tagesdifferenz</small>
+            </div>
+
+            <div class="entry-actions">
+                <a
+                    href="{% url 'eintrag_bearbeiten' eintrag.id %}"
+                    class="icon-button edit-button"
+                    title="Eintrag bearbeiten"
+                    aria-label="Eintrag vom {{ eintrag.datum|date:'d.m.Y' }} bearbeiten"
+                >
+                    <i data-lucide="pencil"></i>
+                </a>
+
+                <form
+                    method="post"
+                    action="{% url 'eintrag_loeschen' eintrag.id %}"
+                    onsubmit="return confirm('Diesen Eintrag wirklich löschen?');"
+                >
+                    {% csrf_token %}
+                    <button
+                        type="submit"
+                        class="icon-button delete-button"
+                        title="Eintrag löschen"
+                        aria-label="Eintrag vom {{ eintrag.datum|date:'d.m.Y' }} löschen"
+                    >
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </form>
+            </div>
+        </article>
+    {% empty %}
+        <div class="empty-state">
+            <p>Für diesen Zeitraum gibt es keine Einträge.</p>
+            <a href="{% url 'eintrag_erfassen' %}">
+                Arbeitszeit erfassen
+            </a>
+        </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="pagination" aria-label="Seitennavigation">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&von={{ filter_von }}&bis={{ filter_bis }}">
+            Zurück
+        </a>
+    {% endif %}
+
+    <span>
+        Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&von={{ filter_von }}&bis={{ filter_bis }}">
+            Weiter
+        </a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}

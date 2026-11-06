@@ -1,0 +1,16 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Profil – Arbeitszeitrechner{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Profil</h1><p>Verwalte deine Kontoeinstellungen.</p></div></div>
+<div class="form-card">
+<form method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+    <div class="form-field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}{% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}</div>
+    {% endfor %}
+    <button type="submit" class="primary-button">Profil speichern</button>
+</form>
+</div>
+<div class="dashboard-section"><h2>Passwort</h2><p>Dein Passwort kannst du über die Passwortverwaltung ändern.</p><a href="{% url 'password_change' %}">Passwort ändern</a></div>
+{% endblock %}

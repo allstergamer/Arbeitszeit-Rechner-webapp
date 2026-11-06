@@ -1,0 +1,50 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Dashboard – Arbeitszeitrechner{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div><h1>Dashboard</h1><p>Deine aktuelle Arbeitszeitübersicht für {{ heute|date:"l, d.m.Y" }}.</p></div>
+    <a href="{% url 'eintrag_erfassen' %}" class="primary-button">＋ Eintrag erfassen</a>
+</div>
+
+{% if live_erfassung %}
+<section class="dashboard-card live-card">
+    <span class="card-label">LIVE-ERFASSUNG LÄUFT</span>
+    <h2>{{ live_seit }}</h2>
+    <p>Deine Arbeitszeit läuft. Beende die Erfassung, sobald du fertig bist.</p>
+    <form method="post" action="{% url 'live_stop' %}">
+        {% csrf_token %}<button class="primary-button" type="submit">Arbeitszeit beenden und speichern</button>
+    </form>
+</section>
+{% else %}
+<section class="dashboard-card live-card">
+    <span class="card-label">LIVE-ERFASSUNG</span>
+    <p>Starte die Zeiterfassung direkt beim Arbeitsbeginn.</p>
+    <form method="post" action="{% url 'live_start' %}">
+        {% csrf_token %}<button class="primary-button" type="submit">▶ Arbeitszeit starten</button>
+    </form>
+</section>
+{% endif %}
+
+<div class="dashboard-grid">
+    <article class="dashboard-card"><span class="card-label">HEUTE</span><h2>{{ heute_ist }}</h2><p>Nettoarbeitszeit heute</p></article>
+    <article class="dashboard-card"><span class="card-label">DIESE WOCHE</span><h2>{{ wochen_ist }}</h2><p>Wochensoll: {{ wochen_soll }}</p></article>
+    <article class="dashboard-card"><span class="card-label">ZEITKONTO</span><h2>{{ zeitkonto }}</h2><p>Gesamter Saldo</p></article>
+    <article class="dashboard-card"><span class="card-label">DIESER MONAT</span><h2>{{ monats_ist }}</h2><p>Nettoarbeitszeit im aktuellen Monat</p></article>
+</div>
+
+<section class="dashboard-section">
+    <div class="section-heading"><h2>Letzte Einträge</h2><a href="{% url 'eintraege' %}">Alle anzeigen</a></div>
+    <div class="entry-list">
+        {% for eintrag in letzte_eintraege %}
+        <article class="entry-row">
+            <div class="entry-main"><strong>{{ eintrag.datum|date:"d.m.Y" }}</strong><small>{{ eintrag.startzeit|time:"H:i" }} – {{ eintrag.endzeit|time:"H:i" }}</small></div>
+            <div class="entry-work"><strong>{{ eintrag.arbeitsminuten }} min</strong><small>Nettoarbeitszeit</small></div>
+            <div class="entry-balance"><strong>{% if eintrag.differenzminuten > 0 %}+{% endif %}{{ eintrag.differenzminuten }} min</strong><small>Tagesdifferenz</small></div>
+            <a href="{% url 'eintrag_bearbeiten' eintrag.id %}">Bearbeiten</a>
+        </article>
+        {% empty %}
+        <div class="empty-state"><p>Noch keine Arbeitszeiteinträge vorhanden.</p><a href="{% url 'eintrag_erfassen' %}">Ersten Eintrag erfassen</a></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

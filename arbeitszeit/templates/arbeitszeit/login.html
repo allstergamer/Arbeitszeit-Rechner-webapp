@@ -1,0 +1,17 @@
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Anmelden – Arbeitszeitrechner{% endblock %}
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-brand">◷ Arbeitszeit</div><h1>Anmelden</h1>
+    <p class="auth-description">Melde dich an, um deine Arbeitszeiten zu verwalten.</p>
+    {% if form.errors %}<div class="message error">Benutzername oder Passwort ist nicht korrekt.</div>{% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-field"><label for="id_username">Benutzername</label><input type="text" id="id_username" name="username" autocomplete="username" value="{{ form.username.value|default:'' }}" required autofocus></div>
+        <div class="form-field"><label for="id_password">Passwort</label><input type="password" id="id_password" name="password" autocomplete="current-password" required></div>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <button type="submit" class="primary-button">Anmelden</button>
+    </form>
+    <div class="auth-link">Noch kein Konto? <a href="{% url 'register' %}">Jetzt registrieren</a></div>
+</div>
+{% endblock %}

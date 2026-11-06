@@ -1,0 +1,257 @@
+
+{% extends "arbeitszeit/base.html" %}
+{% block title %}Auswertungen – Arbeitszeitrechner{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Auswertungen</h1>
+        <p>Übersicht deiner erfassten Arbeitszeiten und Zeitkonten.</p>
+    </div>
+</div>
+
+<div class="section-heading">
+    <h2>Arbeitszeitnachweise</h2>
+    <div class="button-group">
+        <button type="button" class="primary-button"
+                onclick="document.getElementById('monat-dialog').showModal()">
+            Monatszettel als PDF erstellen
+        </button>
+
+        <button type="button" class="primary-button"
+                onclick="document.getElementById('woche-dialog').showModal()">
+            Wochenzettel als PDF erstellen
+        </button>
+    </div>
+</div>
+
+<!-- Monatszettel -->
+<dialog id="monat-dialog" class="export-dialog"
+        aria-labelledby="monat-dialog-title">
+    <form method="get" action="{% url 'pdf_export' %}">
+        <input type="hidden" name="zeitraum" value="monat">
+
+        <h2 id="monat-dialog-title">Monatszettel als PDF erstellen</h2>
+        <p>Wähle das Jahr und den Monat für deinen Arbeitszeitnachweis.</p>
+
+        <label for="monat-jahr">Jahr</label>
+        <select id="monat-jahr" name="jahr" required>
+            {% for jahr in jahre %}
+                <option value="{{ jahr }}"
+                    {% if jahr == aktuelles_jahr %}selected{% endif %}>
+                    {{ jahr }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="monat-auswahl">Monat</label>
+        <select id="monat-auswahl" name="nummer" required>
+            <option value="1" {% if aktueller_monat == 1 %}selected{% endif %}>Januar</option>
+            <option value="2" {% if aktueller_monat == 2 %}selected{% endif %}>Februar</option>
+            <option value="3" {% if aktueller_monat == 3 %}selected{% endif %}>März</option>
+            <option value="4" {% if aktueller_monat == 4 %}selected{% endif %}>April</option>
+            <option value="5" {% if aktueller_monat == 5 %}selected{% endif %}>Mai</option>
+            <option value="6" {% if aktueller_monat == 6 %}selected{% endif %}>Juni</option>
+            <option value="7" {% if aktueller_monat == 7 %}selected{% endif %}>Juli</option>
+            <option value="8" {% if aktueller_monat == 8 %}selected{% endif %}>August</option>
+            <option value="9" {% if aktueller_monat == 9 %}selected{% endif %}>September</option>
+            <option value="10" {% if aktueller_monat == 10 %}selected{% endif %}>Oktober</option>
+            <option value="11" {% if aktueller_monat == 11 %}selected{% endif %}>November</option>
+            <option value="12" {% if aktueller_monat == 12 %}selected{% endif %}>Dezember</option>
+        </select>
+
+        <div class="dialog-actions">
+            <button type="button" class="secondary-button"
+                    onclick="this.closest('dialog').close()">
+                Abbrechen
+            </button>
+            <button type="submit" class="primary-button">PDF erstellen</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Wochenzettel -->
+<dialog id="woche-dialog" class="export-dialog"
+        aria-labelledby="woche-dialog-title">
+    <form method="get" action="{% url 'pdf_export' %}">
+        <input type="hidden" name="zeitraum" value="woche">
+
+        <h2 id="woche-dialog-title">Wochenzettel als PDF erstellen</h2>
+        <p>Wähle das Jahr und die Kalenderwoche für deinen Arbeitszeitnachweis.</p>
+
+        <label for="woche-jahr">Jahr</label>
+        <select id="woche-jahr" name="jahr" required
+                data-current-year="{{ aktuelles_iso_jahr }}">
+            {% for jahr in jahre %}
+                <option value="{{ jahr }}"
+                    {% if jahr == aktuelles_iso_jahr %}selected{% endif %}>
+                    {{ jahr }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="woche-nummer">Kalenderwoche</label>
+        <select id="woche-nummer" name="nummer" required
+                data-current-week="{{ aktuelle_kw }}">
+        </select>
+
+        <p id="woche-zeitraum" class="muted-text" aria-live="polite">
+            Zeitraum wird berechnet …
+        </p>
+
+        <div class="dialog-actions">
+            <button type="button" class="secondary-button"
+                    onclick="this.closest('dialog').close()">
+                Abbrechen
+            </button>
+            <button type="submit" class="primary-button">PDF erstellen</button>
+        </div>
+    </form>
+</dialog>
+
+<div class="dashboard-section">
+
+    <div class="view-switch">
+        <a href="?ansicht=monat"
+           class="view-switch-option {% if ansicht == 'monat' %}active{% endif %}">
+            Monatsansicht
+        </a>
+
+        <a href="?ansicht=woche"
+           class="view-switch-option {% if ansicht == 'woche' %}active{% endif %}">
+            Wochenansicht
+        </a>
+    </div>
+
+    <div class="entry-list">
+        {% if auswertungen %}
+            <div class="entry-row evaluation-header">
+                <div>Zeitraum</div>
+                <div>Einträge</div>
+                <div>Nettozeit</div>
+                <div>Sollzeit</div>
+                <div>Differenz</div>
+            </div>
+
+            {% for gruppe in auswertungen %}
+                <article class="entry-row evaluation-row">
+                    <div class="entry-main">
+                        <strong>{{ gruppe.zeitraum }}</strong>
+                    </div>
+                    <div>
+                        <strong>{{ gruppe.anzahl }}</strong>
+                    </div>
+                    <div>
+                        <strong>{{ gruppe.ist_zeit }}</strong>
+                    </div>
+                    <div>
+                        <strong>{{ gruppe.soll_zeit }}</strong>
+                    </div>
+                    <div>
+                        <strong>{{ gruppe.differenz_zeit }}</strong>
+                    </div>
+                </article>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                Noch keine Arbeitszeiteinträge vorhanden.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const jahrAuswahl = document.getElementById("woche-jahr");
+    const kwAuswahl = document.getElementById("woche-nummer");
+    const zeitraumAnzeige = document.getElementById("woche-zeitraum");
+
+    if (!jahrAuswahl || !kwAuswahl || !zeitraumAnzeige) {
+        return;
+    }
+
+    const aktuelleKW = Number(kwAuswahl.dataset.currentWeek);
+
+    function isoKalenderwoche(datum) {
+        const tag = new Date(Date.UTC(
+            datum.getFullYear(),
+            datum.getMonth(),
+            datum.getDate()
+        ));
+
+        const wochentag = tag.getUTCDay() || 7;
+        tag.setUTCDate(tag.getUTCDate() + 4 - wochentag);
+
+        const jahresanfang = new Date(Date.UTC(
+            tag.getUTCFullYear(), 0, 1
+        ));
+
+        return Math.ceil(
+            (((tag - jahresanfang) / 86400000) + 1) / 7
+        );
+    }
+
+    function datumFormatieren(datum) {
+        return new Intl.DateTimeFormat("de-DE", {
+            timeZone: "UTC",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        }).format(datum);
+    }
+
+    function zeitraumAnzeigen() {
+        const jahr = Number(jahrAuswahl.value);
+        const kw = Number(kwAuswahl.value);
+
+        if (!jahr || !kw) {
+            return;
+        }
+
+        const vierterJanuar = new Date(Date.UTC(jahr, 0, 4));
+        const wochentag = vierterJanuar.getUTCDay() || 7;
+
+        const montag = new Date(vierterJanuar);
+        montag.setUTCDate(
+            montag.getUTCDate() - wochentag + 1 + (kw - 1) * 7
+        );
+
+        const sonntag = new Date(montag);
+        sonntag.setUTCDate(sonntag.getUTCDate() + 6);
+
+        zeitraumAnzeige.textContent =
+            "Zeitraum: " + datumFormatieren(montag)
+            + " – " + datumFormatieren(sonntag);
+    }
+
+    function wochenAktualisieren() {
+        const jahr = Number(jahrAuswahl.value);
+        const bisherigeKW = Number(kwAuswahl.value) || aktuelleKW;
+
+        // Der 28. Dezember liegt immer in der letzten ISO-Kalenderwoche.
+        const letzteKW = isoKalenderwoche(
+            new Date(jahr, 11, 28)
+        );
+
+        kwAuswahl.innerHTML = "";
+
+        for (let kw = 1; kw <= letzteKW; kw++) {
+            const option = document.createElement("option");
+            option.value = kw;
+            option.textContent = "KW " + String(kw).padStart(2, "0");
+            kwAuswahl.appendChild(option);
+        }
+
+        const ausgewaehlteKW = Math.min(bisherigeKW, letzteKW);
+        kwAuswahl.value = String(ausgewaehlteKW);
+
+        zeitraumAnzeigen();
+    }
+
+    jahrAuswahl.addEventListener("change", wochenAktualisieren);
+    kwAuswahl.addEventListener("change", zeitraumAnzeigen);
+
+    wochenAktualisieren();
+});
+</script>
+{% endblock %}
