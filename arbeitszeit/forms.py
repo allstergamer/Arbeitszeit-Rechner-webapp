@@ -1,7 +1,16 @@
 
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 
 from .models import ArbeitszeitEintrag
+
+
+class RegistrierungForm(UserCreationForm):
+    first_name = forms.CharField(label="Vorname", max_length=150)
+    last_name = forms.CharField(label="Nachname", max_length=150)
+
+    class Meta(UserCreationForm.Meta):
+        fields = ("username", "first_name", "last_name")
 
 
 class ArbeitszeitEintragForm(forms.ModelForm):

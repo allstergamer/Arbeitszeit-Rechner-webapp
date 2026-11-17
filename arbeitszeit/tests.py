@@ -287,3 +287,28 @@ class KopfzeilenAbmeldungTests(TestCase):
         self.assertContains(response, 'class="topbar-logout-form"')
         self.assertContains(response, 'method="post"')
         self.assertContains(response, "return confirm('Möchtest du dich wirklich abmelden?');")
+
+
+class RegistrierungTests(TestCase):
+    def test_registrierung_speichert_vorname_und_nachname(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "name-test",
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "password1": "Strong-unique-password-847!",
+                "password2": "Strong-unique-password-847!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("login"))
+        user = get_user_model().objects.get(username="name-test")
+        self.assertEqual(user.first_name, "Ada")
+        self.assertEqual(user.last_name, "Lovelace")
+
+    def test_anmeldung_fragt_keine_namen_ab(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertNotContains(response, 'name="first_name"')
+        self.assertNotContains(response, 'name="last_name"')

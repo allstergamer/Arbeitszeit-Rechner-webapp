@@ -5,14 +5,13 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import ArbeitszeitEintragForm
+from .forms import ArbeitszeitEintragForm, RegistrierungForm
 from .models import (
     AenderungsHistorie,
     ArbeitszeitEintrag,
@@ -1332,7 +1331,7 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
 
-    form = UserCreationForm(request.POST or None)
+    form = RegistrierungForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(

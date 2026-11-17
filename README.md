@@ -6,7 +6,7 @@ Die Anwendung ist eine serverseitig gerenderte Multi-Page Application (MPA). Dja
 
 ## Funktionen
 
-- Benutzerregistrierung, Anmeldung und persönliches Profil
+- Benutzerregistrierung mit Vor- und Nachname, Anmeldung und persönliches Profil
 - Arbeitszeiten manuell eintragen, bearbeiten und löschen
 - Live-Erfassung mit Starten, Beenden und Abbrechen
 - Berechnung von Nettoarbeitszeit, Tagessoll und Zeitdifferenz
