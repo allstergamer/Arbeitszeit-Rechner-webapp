@@ -1,4 +1,5 @@
 {% extends "arbeitszeit/base.html" %}
+{% load static %}
 {% block title %}{% if bearbeiten %}Eintrag bearbeiten{% else %}Eintrag erfassen{% endif %} – Arbeitszeitrechner{% endblock %}
 {% block content %}
 <div class="page-header"><div><h1>{% if bearbeiten %}Arbeitszeiteintrag bearbeiten{% else %}Arbeitszeit erfassen{% endif %}</h1><p>Trage Datum und Arbeitszeiten ein. Pausen und Sollwerte werden anhand deiner gültigen Einstellungen übernommen.</p></div></div>
@@ -7,9 +8,23 @@
         {% csrf_token %}
         {% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
         {% for field in form %}
-        <div class="form-field">
+        <div class="form-field{% if field.name == 'azv' %} azv-form-field{% endif %}">
+            {% if field.name == "azv" %}
+            <div class="azv-toggle">
+                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <span class="azv-info"
+                      role="img"
+                      aria-label="AZV: Die Tagesdifferenz bleibt unabhängig von der Arbeitszeit bei ±0; das Zeitkonto ändert sich dadurch nicht."
+                      title="AZV: Die Tagesdifferenz bleibt unabhängig von der Arbeitszeit bei ±0; das Zeitkonto ändert sich dadurch nicht.">
+                    <i data-lucide="circle-alert" aria-hidden="true"></i>
+                </span>
+            </div>
+            <small class="field-help">Bei AZV bleibt die Tagesdifferenz unabhängig von der Arbeitszeit bei ±0. Das Zeitkonto wird dadurch weder erhöht noch verringert.</small>
+            {% else %}
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
+            {% endif %}
             {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
             {% if field.errors %}<div class="field-error">{{ field.errors }}</div>{% endif %}
         </div>
@@ -20,4 +35,8 @@
         </div>
     </form>
 </div>
+{% endblock %}
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'arbeitszeit/pickers.js' %}"></script>
 {% endblock %}

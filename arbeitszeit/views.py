@@ -42,6 +42,8 @@ ARBEITSZEIT_MODELLE = [
     ("regel", "Regelarbeitszeit"),
 ]
 
+WARNUNGS_GRENZE_ARBEITSZEIT = timedelta(hours=11)
+
 
 def minuten_formatieren(minuten):
     minuten = int(minuten or 0)
@@ -91,6 +93,12 @@ def arbeitszeit_berechnen(datum, startzeit, endzeit, fruehstueck, mittag):
         )
 
     return anwesenheitsminuten - pausenminuten
+
+
+def zeitspanne_ueber_warnungsgrenze(startzeit, endzeit):
+    start = datetime.combine(date.min, startzeit)
+    ende = datetime.combine(date.min, endzeit)
+    return ende - start > WARNUNGS_GRENZE_ARBEITSZEIT
 
 
 def eintrag_speichern_mit_historie(eintrag, aktion):
@@ -227,6 +235,12 @@ def dashboard(request):
     einstellung = einstellung_fuer_datum(request.user, heute)
     wochen_soll = einstellung.wochen_soll if einstellung else 2315
     live_erfassung = LiveErfassung.objects.filter(benutzer=request.user).first()
+    letzte_eintraege = list(eintraege.order_by("-datum")[:5])
+    for eintrag in letzte_eintraege:
+        eintrag.warnung_lange_arbeitszeit = zeitspanne_ueber_warnungsgrenze(
+            eintrag.startzeit,
+            eintrag.endzeit,
+        )
 
     context = {
         "heute": heute,
@@ -237,8 +251,13 @@ def dashboard(request):
         "wochen_soll": minuten_formatieren(wochen_soll),
         "zeitkonto": minuten_formatieren(zeitkonto),
         "monats_ist": minuten_formatieren(monats_ist),
-        "letzte_eintraege": eintraege.order_by("-datum")[:5],
+        "letzte_eintraege": letzte_eintraege,
         "live_erfassung": live_erfassung,
+        "live_warnung_lange_arbeitszeit": (
+            live_erfassung is not None
+            and timezone.now() - live_erfassung.gestartet_am
+            > WARNUNGS_GRENZE_ARBEITSZEIT
+        ),
         "live_seit": (
             timezone.localtime(live_erfassung.gestartet_am).strftime("%d.%m.%Y %H:%M")
             if live_erfassung else None
@@ -285,7 +304,9 @@ def eintrag_erfassen(request):
                     str(datum.weekday()), 0
                 )
                 eintrag.differenzminuten = (
-                    eintrag.arbeitsminuten - eintrag.sollminuten
+                    0
+                    if eintrag.azv
+                    else eintrag.arbeitsminuten - eintrag.sollminuten
                 )
 
                 try:
@@ -325,11 +346,18 @@ def eintraege(request):
         except ValueError:
             filter_bis = ""
 
+    eintraege = list(queryset.order_by("-datum"))
+    for eintrag in eintraege:
+        eintrag.warnung_lange_arbeitszeit = zeitspanne_ueber_warnungsgrenze(
+            eintrag.startzeit,
+            eintrag.endzeit,
+        )
+
     return render(
         request,
         "arbeitszeit/eintraege.html",
         {
-            "eintraege": queryset.order_by("-datum"),
+            "eintraege": eintraege,
             "filter_von": filter_von,
             "filter_bis": filter_bis,
         },
@@ -389,7 +417,11 @@ def eintrag_bearbeiten(request, eintrag_id):
                 aktualisiert.mittagspause = mittag
                 aktualisiert.arbeitsminuten = arbeitsminuten
                 aktualisiert.sollminuten = sollminuten
-                aktualisiert.differenzminuten = arbeitsminuten - sollminuten
+                aktualisiert.differenzminuten = (
+                    0
+                    if aktualisiert.azv
+                    else arbeitsminuten - sollminuten
+                )
 
                 try:
                     eintrag_speichern_mit_historie(aktualisiert, "bearbeitet")
@@ -1073,29 +1105,26 @@ def einstellungen(request):
 
             if not zeiten_form.errors:
                 gueltig_ab = form.cleaned_data["gueltig_ab"]
-                if ArbeitszeitEinstellung.objects.filter(
+                _, created = ArbeitszeitEinstellung.objects.update_or_create(
                     benutzer=request.user,
                     gueltig_ab=gueltig_ab,
-                ).exists():
-                    form.add_error(
-                        "gueltig_ab",
-                        "Für dieses Datum existiert bereits eine Einstellungsversion.",
-                    )
-                else:
-                    ArbeitszeitEinstellung.objects.create(
-                        benutzer=request.user,
-                        gueltig_ab=gueltig_ab,
-                        wochen_soll=form.cleaned_data["wochen_soll"],
-                        tages_soll=tages_soll,
-                        fruehstueckspause=form.cleaned_data["fruehstueckspause"],
-                        mittagspause=form.cleaned_data["mittagspause"],
-                        zeiten=zeiten,
-                    )
-                    messages.success(
-                        request,
-                        "Neue Einstellungen wurden gespeichert und gelten ab dem gewählten Datum.",
-                    )
-                    return redirect("einstellungen")
+                    defaults={
+                        "wochen_soll": form.cleaned_data["wochen_soll"],
+                        "tages_soll": tages_soll,
+                        "fruehstueckspause": form.cleaned_data["fruehstueckspause"],
+                        "mittagspause": form.cleaned_data["mittagspause"],
+                        "zeiten": zeiten,
+                    },
+                )
+                messages.success(
+                    request,
+                    (
+                        "Einstellungen wurden gespeichert und gelten ab dem gewählten Datum."
+                        if created else
+                        "Einstellungen für das gewählte Datum wurden aktualisiert."
+                    ),
+                )
+                return redirect("einstellungen")
     else:
         initial = {
             "gueltig_ab": timezone.localdate(),
@@ -1251,6 +1280,24 @@ def live_stop(request):
         )
     else:
         messages.success(request, "Arbeitszeit wurde gespeichert.")
+    return redirect("dashboard")
+
+
+@login_required
+def live_cancel(request):
+    if request.method != "POST":
+        return redirect("dashboard")
+
+    live = LiveErfassung.objects.filter(benutzer=request.user).first()
+    if live is None:
+        messages.info(request, "Es läuft keine Live-Erfassung.")
+    else:
+        live.delete()
+        messages.success(
+            request,
+            "Live-Erfassung wurde abgebrochen. Es wurde kein Eintrag gespeichert.",
+        )
+
     return redirect("dashboard")
 
 

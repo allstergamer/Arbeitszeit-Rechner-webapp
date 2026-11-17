@@ -1,9 +1,9 @@
 {% extends "arbeitszeit/base.html" %}
 {% block title %}Dashboard – Arbeitszeitrechner{% endblock %}
 {% block content %}
-<div class="page-header">
+<div class="page-header dashboard-page-header">
     <div><h1>Dashboard</h1><p>Deine aktuelle Arbeitszeitübersicht für {{ heute|date:"l, d.m.Y" }}.</p></div>
-    <a href="{% url 'eintrag_erfassen' %}" class="primary-button">＋ Eintrag erfassen</a>
+    <a href="{% url 'eintrag_erfassen' %}" class="primary-button entry-create-button">＋ Eintrag erfassen</a>
 </div>
 
 {% if live_erfassung %}
@@ -11,9 +11,21 @@
     <span class="card-label">LIVE-ERFASSUNG LÄUFT</span>
     <h2>{{ live_seit }}</h2>
     <p>Deine Arbeitszeit läuft. Beende die Erfassung, sobald du fertig bist.</p>
-    <form method="post" action="{% url 'live_stop' %}">
-        {% csrf_token %}<button class="primary-button" type="submit">Arbeitszeit beenden und speichern</button>
-    </form>
+    {% if live_warnung_lange_arbeitszeit %}
+    <p class="duration-warning" role="status">
+        <i data-lucide="triangle-alert" aria-hidden="true"></i>
+        Warnung: Die laufende Arbeitszeit dauert länger als 11 Stunden.
+    </p>
+    {% endif %}
+    <div class="live-actions">
+        <form method="post" action="{% url 'live_stop' %}">
+            {% csrf_token %}<button class="primary-button" type="submit">Arbeitszeit beenden und speichern</button>
+        </form>
+        <form method="post" action="{% url 'live_cancel' %}"
+              onsubmit="return confirm('Live-Erfassung wirklich abbrechen? Die Zeit wird nicht gespeichert.');">
+            {% csrf_token %}<button class="secondary-button" type="submit">Erfassung abbrechen</button>
+        </form>
+    </div>
 </section>
 {% else %}
 <section class="dashboard-card live-card">
@@ -32,15 +44,50 @@
     <article class="dashboard-card"><span class="card-label">DIESER MONAT</span><h2>{{ monats_ist }}</h2><p>Nettoarbeitszeit im aktuellen Monat</p></article>
 </div>
 
-<section class="dashboard-section">
-    <div class="section-heading"><h2>Letzte Einträge</h2><a href="{% url 'eintraege' %}">Alle anzeigen</a></div>
+<section class="dashboard-section dashboard-recent-section">
+    <div class="section-heading">
+        <h2>Letzte Einträge</h2>
+        <a href="{% url 'eintraege' %}" class="secondary-button dashboard-action-button">Alle anzeigen</a>
+    </div>
     <div class="entry-list">
         {% for eintrag in letzte_eintraege %}
         <article class="entry-row">
-            <div class="entry-main"><strong>{{ eintrag.datum|date:"d.m.Y" }}</strong><small>{{ eintrag.startzeit|time:"H:i" }} – {{ eintrag.endzeit|time:"H:i" }}</small></div>
+            <div class="entry-main">
+                <div class="entry-date-line">
+                    <strong>{{ eintrag.datum|date:"d.m.Y" }}</strong>
+                    {% if eintrag.azv or eintrag.warnung_lange_arbeitszeit %}
+                    <span class="entry-indicators">
+                    {% if eintrag.azv %}
+                    <span
+                        class="azv-indicator"
+                        role="img"
+                        aria-label="AZV: Tagesdifferenz ±0; Zeitkonto bleibt unverändert."
+                        title="AZV – Arbeitszeitverkürzung: Die Tagesdifferenz bleibt unabhängig von der Arbeitszeit bei ±0. Das Zeitkonto ändert sich dadurch nicht."
+                    >
+                        <i data-lucide="circle-alert" aria-hidden="true"></i>
+                    </span>
+                    {% endif %}
+                    {% if eintrag.warnung_lange_arbeitszeit %}
+                    <button
+                        type="button"
+                        class="duration-warning-icon duration-warning-trigger"
+                        aria-label="Warnung: Arbeitszeit länger als empfohlen. Optionen öffnen"
+                        title="Arbeitszeit länger als empfohlen. Optionen öffnen"
+                        data-entry-date="{{ eintrag.datum|date:'d.m.Y' }}"
+                        data-edit-url="{% url 'eintrag_bearbeiten' eintrag.id %}"
+                        data-delete-url="{% url 'eintrag_loeschen' eintrag.id %}"
+                    >
+                        <i data-lucide="triangle-alert" aria-hidden="true"></i>
+                    </button>
+                    {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+                <small>{{ eintrag.startzeit|time:"H:i" }} – {{ eintrag.endzeit|time:"H:i" }}</small>
+            </div>
             <div class="entry-work"><strong>{{ eintrag.arbeitsminuten }} min</strong><small>Nettoarbeitszeit</small></div>
             <div class="entry-balance"><strong>{% if eintrag.differenzminuten > 0 %}+{% endif %}{{ eintrag.differenzminuten }} min</strong><small>Tagesdifferenz</small></div>
-            <a href="{% url 'eintrag_bearbeiten' eintrag.id %}">Bearbeiten</a>
+            <a href="{% url 'eintrag_bearbeiten' eintrag.id %}" class="secondary-button dashboard-action-button">Bearbeiten</a>
         </article>
         {% empty %}
         <div class="empty-state"><p>Noch keine Arbeitszeiteinträge vorhanden.</p><a href="{% url 'eintrag_erfassen' %}">Ersten Eintrag erfassen</a></div>

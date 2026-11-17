@@ -7,7 +7,7 @@
     <meta name="color-scheme" content="light dark">
     <script src="https://unpkg.com/lucide@latest"></script>
     <title>{% block title %}Arbeitszeitrechner{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'arbeitszeit/style.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'arbeitszeit/style.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -36,7 +36,15 @@
                 <span class="brand-subtitle">Arbeitszeitmanagement</span>
             </span>
         </a>
-        <nav class="sidebar-nav" aria-label="Hauptnavigation">
+        <button class="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-nav">
+            <span class="mobile-menu-icon" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+            <span>Menü</span>
+        </button>
+        <nav class="sidebar-nav" id="sidebar-nav" aria-label="Hauptnavigation">
             <span class="nav-label">ÜBERSICHT</span>
             <a href="{% url 'dashboard' %}" class="nav-item">▦ Dashboard</a>
             <a href="{% url 'eintrag_erfassen' %}" class="nav-item">＋ Eintrag erfassen</a>
@@ -61,7 +69,18 @@
     <main class="main-content">
         <header class="topbar">
             <span>Arbeitszeitverwaltung</span>
-            <span>{{ user.username }}</span>
+            <form
+                method="post"
+                action="{% url 'logout' %}"
+                class="topbar-logout-form"
+                onsubmit="return confirm('Möchtest du dich wirklich abmelden?');"
+            >
+                {% csrf_token %}
+                <button type="submit" class="topbar-logout-button">
+                    <i data-lucide="log-out" aria-hidden="true"></i>
+                    Abmelden 
+                </button>
+            </form>
         </header>
         <section class="page-content">
             {% if messages %}
@@ -73,6 +92,20 @@
         </section>
     </main>
 </div>
+<dialog class="duration-warning-dialog" aria-labelledby="duration-warning-title">
+    <div class="duration-warning-dialog-content">
+        <h2 id="duration-warning-title">Arbeitszeit länger als empfohlen</h2>
+        <p class="duration-warning-dialog-message"></p>
+        <div class="duration-warning-dialog-actions">
+            <button type="button" class="secondary-button" data-warning-close>Abbrechen</button>
+            <a class="secondary-button" data-warning-edit>Bearbeiten</a>
+            <form method="post" data-warning-delete-form data-entry-date="">
+                {% csrf_token %}
+                <button type="submit" class="danger-button">Löschen</button>
+            </form>
+        </div>
+    </div>
+</dialog>
 {% else %}
 <main class="auth-layout">
     {% if messages %}
@@ -84,6 +117,77 @@
 {% block extra_js %}{% endblock %}
 <script>
     lucide.createIcons();
+    const sidebar = document.querySelector(".sidebar");
+    const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
+    const sidebarNav = document.querySelector("#sidebar-nav");
+    const mobileViewport = window.matchMedia("(max-width: 700px)");
+
+    if (sidebar && mobileMenuToggle && sidebarNav) {
+        const syncSidebar = () => {
+            const isExpanded = mobileMenuToggle.getAttribute("aria-expanded") === "true";
+            sidebar.classList.toggle("is-open", mobileViewport.matches && isExpanded);
+        };
+
+        syncSidebar();
+        mobileViewport.addEventListener("change", () => {
+            mobileMenuToggle.setAttribute("aria-expanded", "false");
+            syncSidebar();
+        });
+
+        mobileMenuToggle.addEventListener("click", () => {
+            const isExpanded = mobileMenuToggle.getAttribute("aria-expanded") === "true";
+            mobileMenuToggle.setAttribute("aria-expanded", String(!isExpanded));
+            syncSidebar();
+        });
+
+        sidebar.querySelectorAll(".sidebar-nav a").forEach((link) => {
+            link.addEventListener("click", () => {
+                mobileMenuToggle.setAttribute("aria-expanded", "false");
+                syncSidebar();
+            });
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                mobileMenuToggle.setAttribute("aria-expanded", "false");
+                syncSidebar();
+            }
+        });
+    }
+
+    const warningDialog = document.querySelector(".duration-warning-dialog");
+
+    if (warningDialog) {
+        const warningMessage = warningDialog.querySelector(".duration-warning-dialog-message");
+        const editLink = warningDialog.querySelector("[data-warning-edit]");
+        const deleteForm = warningDialog.querySelector("[data-warning-delete-form]");
+
+        document.querySelectorAll(".duration-warning-trigger").forEach((trigger) => {
+            trigger.addEventListener("click", () => {
+                warningMessage.textContent = `Der Eintrag vom ${trigger.dataset.entryDate} dauert länger als empfohlen.`;
+                editLink.href = trigger.dataset.editUrl;
+                deleteForm.action = trigger.dataset.deleteUrl;
+                deleteForm.dataset.entryDate = trigger.dataset.entryDate;
+                warningDialog.showModal();
+            });
+        });
+
+        warningDialog.querySelector("[data-warning-close]").addEventListener("click", () => {
+            warningDialog.close();
+        });
+
+        deleteForm.addEventListener("submit", (event) => {
+            if (!window.confirm(`Den Arbeitszeiteintrag vom ${deleteForm.dataset.entryDate} wirklich löschen?`)) {
+                event.preventDefault();
+            }
+        });
+
+        warningDialog.addEventListener("click", (event) => {
+            if (event.target === warningDialog) {
+                warningDialog.close();
+            }
+        });
+    }
 </script>
 </body>
 </html>

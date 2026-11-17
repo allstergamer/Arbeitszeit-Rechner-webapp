@@ -45,4 +45,5 @@ urlpatterns = [
     # Live-Erfassung
     path("live/start/", views.live_start, name="live_start"),
     path("live/stop/", views.live_stop, name="live_stop"),
+    path("live/abbrechen/", views.live_cancel, name="live_cancel"),
 ]

@@ -135,19 +135,24 @@
 
             {% for gruppe in auswertungen %}
                 <article class="entry-row evaluation-row">
-                    <div class="entry-main">
+                    <div class="evaluation-cell">
+                        <small class="evaluation-label">Zeitraum</small>
                         <strong>{{ gruppe.zeitraum }}</strong>
                     </div>
-                    <div>
+                    <div class="evaluation-cell">
+                        <small class="evaluation-label">Einträge</small>
                         <strong>{{ gruppe.anzahl }}</strong>
                     </div>
-                    <div>
+                    <div class="evaluation-cell">
+                        <small class="evaluation-label">Nettozeit</small>
                         <strong>{{ gruppe.ist_zeit }}</strong>
                     </div>
-                    <div>
+                    <div class="evaluation-cell">
+                        <small class="evaluation-label">Sollzeit</small>
                         <strong>{{ gruppe.soll_zeit }}</strong>
                     </div>
-                    <div>
+                    <div class="evaluation-cell">
+                        <small class="evaluation-label">Differenz</small>
                         <strong>{{ gruppe.differenz_zeit }}</strong>
                     </div>
                 </article>

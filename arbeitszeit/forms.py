@@ -13,6 +13,7 @@ class ArbeitszeitEintragForm(forms.ModelForm):
             "datum",
             "startzeit",
             "endzeit",
+            "azv",
             "notizen",
         ]
 
@@ -20,6 +21,7 @@ class ArbeitszeitEintragForm(forms.ModelForm):
             "datum": "Datum",
             "startzeit": "Arbeitsbeginn",
             "endzeit": "Arbeitsende",
+            "azv": "AZV – Arbeitszeitverkürzung",
             "notizen": "Notizen",
         }
 
@@ -36,6 +38,7 @@ class ArbeitszeitEintragForm(forms.ModelForm):
                 attrs={"type": "time"},
                 format="%H:%M",
             ),
+            "azv": forms.CheckboxInput(attrs={"class": "azv-checkbox"}),
             "notizen": forms.Textarea(
                 attrs={
                     "rows": 3,

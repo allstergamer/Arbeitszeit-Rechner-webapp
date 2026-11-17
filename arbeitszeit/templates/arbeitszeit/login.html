@@ -1,9 +1,22 @@
 {% extends "arbeitszeit/base.html" %}
 {% block title %}Anmelden – Arbeitszeitrechner{% endblock %}
 {% block auth_content %}
-<div class="auth-card">
-    <div class="auth-brand">◷ Arbeitszeit</div><h1>Anmelden</h1>
-    <p class="auth-description">Melde dich an, um deine Arbeitszeiten zu verwalten.</p>
+<div class="auth-card login-card">
+    <div class="auth-brand">
+        <span class="auth-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="2.2"/>
+                <path d="M24 13v11l8 5" stroke="currentColor" stroke-width="2.2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
+        <span class="auth-brand-copy">
+            <strong>Chrona</strong>
+            <small>Arbeitszeitmanagement</small>
+        </span>
+    </div>
+    <h1>Willkommen zurück</h1>
+    <p class="auth-description">Melde dich an, um deine Arbeitszeiten sicher im Blick zu behalten.</p>
     {% if form.errors %}<div class="message error">Benutzername oder Passwort ist nicht korrekt.</div>{% endif %}
     <form method="post">
         {% csrf_token %}
